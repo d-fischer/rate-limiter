@@ -1,0 +1,15 @@
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node_modules/
+*.tgz
+.yarn-integrity
+.env
+/.idea
+/lib
+package-lock.json
+*.code-workspace
+yalc.lock
+/.yalc

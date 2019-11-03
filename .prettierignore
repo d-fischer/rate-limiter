@@ -1,0 +1,6 @@
+/lib
+/LICENSE
+*.sh
+*.md
+package.json
+/.yalc
