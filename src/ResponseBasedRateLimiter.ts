@@ -56,7 +56,7 @@ export default abstract class ResponseBasedRateLimiter<Req, Res = any> {
 		if (this._parameters) {
 			this._logger.debug1(`remaining requests: ${this._parameters.remaining}`);
 		}
-		this._logger.debug2(`doing${reqSpecs.length} requests, new queue length is ${this._queue.length}`);
+		this._logger.debug2(`doing ${reqSpecs.length} requests, new queue length is ${this._queue.length}`);
 		const promises = reqSpecs.map(
 			async (reqSpec): Promise<RateLimiterResponseParameters | undefined> => {
 				const { req, resolve, reject } = reqSpec;
