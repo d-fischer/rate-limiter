@@ -17,7 +17,7 @@
   "author": "Daniel Fischer <daniel@d-fischer.dev>",
   "license": "MIT",
   "dependencies": {
-    "@d-fischer/logger": "^0.1.0",
+    "@d-fischer/logger": "^0.2.3",
     "@types/node": "^12.12.5",
     "@types/promise.allsettled": "^1.0.2",
     "promise.allsettled": "^1.0.1",
