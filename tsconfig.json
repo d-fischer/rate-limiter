@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
-	  	"rootDir": "src",
-	  	"outDir": "lib",
+		"rootDir": "src",
+		"outDir": "lib",
 		"module": "commonjs",
 		"target": "es5",
 		"lib": ["dom", "es6", "es2017", "esnext.asynciterable", "esnext.array"],
@@ -19,8 +19,5 @@
 		"experimentalDecorators": true,
 		"downlevelIteration": true
 	},
-	"exclude": [
-		"node_modules",
-		"lib"
-	]
+	"exclude": ["node_modules", "lib", "es"]
 }
