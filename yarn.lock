@@ -37,10 +37,10 @@
     eslint-plugin-import "^2.18.2"
     eslint-plugin-jsdoc "^17.0.1"
 
-"@d-fischer/logger@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@d-fischer/logger/-/logger-1.0.0.tgz#f6beca1241021830492d72a2a51f4da59e77b07b"
-  integrity sha512-AGHuFqNdX1Ar+Tg65ffc6x9PgZmcrFR0OpjVCT9I8zZ5HkAcfkJfQ7byFi9ui56oGgZKW4CFdJo0uRb2wdv0RA==
+"@d-fischer/logger@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@d-fischer/logger/-/logger-1.0.1.tgz#6173de82485dc60c02043331ff376bd47f3bb661"
+  integrity sha512-rb1r41SuSZF6jinFthkfaZij6BROl6LddDJbfMJYEpISz5J93H00700mkW7HYnYaHw+Ot6OCdsmEGxtD2JWq5A==
   dependencies:
     chalk "^3.0.0"
     detect-node "^2.0.4"
@@ -2216,10 +2216,10 @@ to-regex-range@^5.0.1:
   dependencies:
     is-number "^7.0.0"
 
-ts-hybrid-esm-build@^0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/ts-hybrid-esm-build/-/ts-hybrid-esm-build-0.2.1.tgz#bbb9fd5c4c24c145fa1148c95e36ddbb55d77a1f"
-  integrity sha512-xdDtyhAk/05bge7zFSxZFQtrjbYoL+ZwjHu89d5nFXxo8LiUFL7zsw51+djBNCIz5JKodKJPu8yELbeL/SpDYw==
+ts-hybrid-esm-build@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/ts-hybrid-esm-build/-/ts-hybrid-esm-build-0.2.2.tgz#ccb8d2fc47666ec978f9744b666870e436c390b0"
+  integrity sha512-BXVgNn2E81H6v2kpo2L7pegMop4oRfkpE710MGEW2MJRrSP/Us9+onAxRRu187C3addruuIAd+QAM/IDLRLWjg==
   dependencies:
     "@oclif/command" "^1.5.19"
     "@oclif/config" "^1.14.0"
