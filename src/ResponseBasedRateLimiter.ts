@@ -1,8 +1,6 @@
-import * as allSettled from 'promise.allsettled';
-// eslint-disable-next-line no-duplicate-imports
-import { PromiseRejection, PromiseResolution } from 'promise.allsettled';
-import RetryAfterError from './RetryAfterError';
 import Logger, { LogLevel } from '@d-fischer/logger';
+import { rebindable as allSettled, PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
+import RetryAfterError from './RetryAfterError';
 
 export interface RateLimiterResponseParameters {
 	limit: number;
