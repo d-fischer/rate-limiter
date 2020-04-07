@@ -80,7 +80,10 @@ export default abstract class ResponseBasedRateLimiter<Req, Res = any> {
 			}
 		);
 
-		const settledPromises = await allSettled(promises);
+		// downleveling problem hack, see https://github.com/es-shims/Promise.allSettled/issues/5
+		// @ts-ignore
+		// eslint-disable-next-line
+		const settledPromises = await (0, allSettled)(promises);
 		const rejectedPromises = settledPromises.filter(p => p.status === 'rejected');
 
 		const now = Date.now();
