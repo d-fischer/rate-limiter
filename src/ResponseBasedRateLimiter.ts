@@ -1,5 +1,5 @@
 import Logger, { LogLevel } from '@d-fischer/logger';
-import { rebindable as allSettled, PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
+import allSettled, { PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
 import RetryAfterError from './RetryAfterError';
 
 export interface RateLimiterResponseParameters {

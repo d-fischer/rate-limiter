@@ -45,10 +45,10 @@
     detect-node "^2.0.4"
     tslib "^1.10.0"
 
-"@d-fischer/promise.allsettled@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@d-fischer/promise.allsettled/-/promise.allsettled-2.0.0.tgz#c255ef6b99e9b9a48549a39b0d87a540cd764944"
-  integrity sha512-kBGmAnl59gkQ95YFGH1lDH4HEhXkIbHu4TaQowLRr6tuZnLx89RjTf9CoAS/QgxQYWXNRSnyAVU/hsHHl4U3fA==
+"@d-fischer/promise.allsettled@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@d-fischer/promise.allsettled/-/promise.allsettled-2.0.1.tgz#3da8996ec95fd25017d0ec8289302c1b0afdce00"
+  integrity sha512-n3DCu++HfQBsuTRzwCk4hABtjQm+RgyPHecGTg6ze8ocCPKzSllsXQWTX7PEoQHKwoHEEoDiHzddTC62n+HZBA==
   dependencies:
     array.prototype.map "^1.0.2"
     define-properties "^1.1.3"

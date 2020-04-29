@@ -26,7 +26,7 @@
   "license": "MIT",
   "dependencies": {
     "@d-fischer/logger": "^1.0.2",
-    "@d-fischer/promise.allsettled": "^2.0.0",
+    "@d-fischer/promise.allsettled": "^2.0.1",
     "@types/node": "^12.12.5",
     "tslib": "^1.9.3"
   },
