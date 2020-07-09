@@ -1,6 +1,6 @@
-import CustomError from './CustomError';
+import { CustomError } from './CustomError';
 
-export default class RetryAfterError extends CustomError {
+export class RetryAfterError extends CustomError {
 	private readonly _retryAt: number;
 
 	constructor(after: number) {

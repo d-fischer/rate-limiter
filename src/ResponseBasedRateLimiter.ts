@@ -1,6 +1,6 @@
-import Logger, { LogLevel } from '@d-fischer/logger';
+import { Logger, LogLevel } from '@d-fischer/logger';
 import allSettled, { PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
-import RetryAfterError from './RetryAfterError';
+import { RetryAfterError } from './RetryAfterError';
 
 export interface RateLimiterResponseParameters {
 	limit: number;
@@ -15,7 +15,7 @@ interface QueueEntry<Req, Res, Err = Error> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default abstract class ResponseBasedRateLimiter<Req, Res = any> {
+export abstract class ResponseBasedRateLimiter<Req, Res = any> {
 	private _parameters?: RateLimiterResponseParameters;
 	private _queue: Array<QueueEntry<Req, Res>> = [];
 	private _batchRunning = false;
