@@ -24,10 +24,10 @@
   "author": "Daniel Fischer <daniel@d-fischer.dev>",
   "license": "MIT",
   "dependencies": {
-    "@d-fischer/logger": "^2.1.0",
+    "@d-fischer/logger": "^2.1.1",
     "@d-fischer/promise.allsettled": "^2.0.1",
     "@types/node": "^12.12.5",
-    "tslib": "^2.0.1"
+    "tslib": "^2.0.3"
   },
   "devDependencies": {
     "@d-fischer/eslint-config": "^2.0.6",
@@ -35,7 +35,7 @@
     "husky": "^4.3.0",
     "lint-staged": "^10.4.0",
     "prettier": "^2.1.2",
-    "tsukuru": "^0.5.0",
+    "tsukuru": "^0.6.0",
     "typescript": "~4.0.3"
   },
   "files": [
