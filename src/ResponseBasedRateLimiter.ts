@@ -1,5 +1,7 @@
-import { Logger, LogLevel } from '@d-fischer/logger';
-import allSettled, { PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
+import type { LogLevel } from '@d-fischer/logger';
+import { Logger } from '@d-fischer/logger';
+import type { PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
+import allSettled from '@d-fischer/promise.allsettled';
 import { RetryAfterError } from './RetryAfterError';
 
 export interface RateLimiterResponseParameters {
@@ -10,18 +12,18 @@ export interface RateLimiterResponseParameters {
 
 interface QueueEntry<Req, Res, Err = Error> {
 	req: Req;
-	resolve: (res?: Res | PromiseLike<Res>) => void;
+	resolve: (res: Res | PromiseLike<Res>) => void;
 	reject: (err: Err) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export abstract class ResponseBasedRateLimiter<Req, Res = any> {
 	private _parameters?: RateLimiterResponseParameters;
-	private _queue: Array<QueueEntry<Req, Res>> = [];
+	private readonly _queue: Array<QueueEntry<Req, Res>> = [];
 	private _batchRunning = false;
 	private _nextBatchTimer?: NodeJS.Timer;
 
-	private _logger: Logger;
+	private readonly _logger: Logger;
 
 	constructor(logLevel: LogLevel) {
 		this._logger = new Logger({ name: 'rate-limiter', minLevel: logLevel, emoji: true });
@@ -38,7 +40,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res = any> {
 			if (this._batchRunning || this._nextBatchTimer) {
 				this._queue.push(reqSpec);
 			} else {
-				this._runRequestBatch([reqSpec]);
+				void this._runRequestBatch([reqSpec]);
 			}
 		});
 	}
@@ -52,9 +54,9 @@ export abstract class ResponseBasedRateLimiter<Req, Res = any> {
 	private async _runRequestBatch(reqSpecs: Array<QueueEntry<Req, Res>>) {
 		this._batchRunning = true;
 		if (this._parameters) {
-			this._logger.debug1(`remaining requests: ${this._parameters.remaining}`);
+			this._logger.debug(`remaining requests: ${this._parameters.remaining}`);
 		}
-		this._logger.debug2(`doing ${reqSpecs.length} requests, new queue length is ${this._queue.length}`);
+		this._logger.debug(`doing ${reqSpecs.length} requests, new queue length is ${this._queue.length}`);
 		const promises = reqSpecs.map(
 			async (reqSpec): Promise<RateLimiterResponseParameters | undefined> => {
 				const { req, resolve, reject } = reqSpec;
@@ -81,10 +83,10 @@ export abstract class ResponseBasedRateLimiter<Req, Res = any> {
 		);
 
 		// downleveling problem hack, see https://github.com/es-shims/Promise.allSettled/issues/5
-		// @ts-ignore
-		// eslint-disable-next-line
-		const settledPromises = await (0, allSettled)(promises);
-		const rejectedPromises = settledPromises.filter(p => p.status === 'rejected');
+		const settledPromises = await allSettled.call(Promise, promises);
+		const rejectedPromises = settledPromises.filter(
+			(p): p is PromiseRejection<RetryAfterError> => p.status === 'rejected'
+		);
 
 		const now = Date.now();
 		if (rejectedPromises.length) {
@@ -96,12 +98,15 @@ export abstract class ResponseBasedRateLimiter<Req, Res = any> {
 			this._logger.warn(`waiting for ${retryAfter} ms because the rate limit was exceeded`);
 			this._nextBatchTimer = setTimeout(() => {
 				this._parameters = undefined;
-				this._runNextBatch();
+				void this._runNextBatch();
 			}, retryAfter);
 		} else {
 			const params = settledPromises
-				.map((p: PromiseResolution<RateLimiterResponseParameters | undefined>) => p.value)
-				.filter((v): v is RateLimiterResponseParameters => v !== undefined)
+				.filter(
+					(p): p is PromiseResolution<RateLimiterResponseParameters> =>
+						p.status === 'fulfilled' && p.value !== undefined
+				)
+				.map(p => p.value)
 				.reduce<RateLimiterResponseParameters | undefined>((carry, v) => {
 					if (!carry) {
 						return v;
@@ -115,13 +120,13 @@ export abstract class ResponseBasedRateLimiter<Req, Res = any> {
 			if (params) {
 				this._parameters = params;
 				if (params.resetsAt < now || params.remaining > 0) {
-					this._runNextBatch();
+					void this._runNextBatch();
 				} else {
 					const delay = params.resetsAt - now;
 					this._logger.warn(`Waiting for ${delay} ms because the rate limit was reached`);
 					this._nextBatchTimer = setTimeout(() => {
 						this._parameters = undefined;
-						this._runNextBatch();
+						void this._runNextBatch();
 					}, delay);
 				}
 			}
@@ -136,7 +141,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res = any> {
 		const amount = this._parameters ? Math.min(this._parameters.remaining, this._parameters.limit / 10) : 1;
 		const reqSpecs = this._queue.splice(0, amount);
 		if (reqSpecs.length) {
-			this._runRequestBatch(reqSpecs);
+			void this._runRequestBatch(reqSpecs);
 		}
 	}
 }

@@ -12,10 +12,8 @@
 		"noImplicitReturns": true,
 		"importHelpers": true,
 		"strict": true,
-		"strictFunctionTypes": false,
-		"strictPropertyInitialization": false,
-		"suppressImplicitAnyIndexErrors": true,
 		"noUnusedLocals": true,
+		"isolatedModules": true,
 		"experimentalDecorators": true,
 		"downlevelIteration": true
 	},

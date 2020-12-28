@@ -8,7 +8,7 @@ export class RetryAfterError extends CustomError {
 		this._retryAt = Date.now() + after;
 	}
 
-	get retryAt() {
+	get retryAt(): number {
 		return this._retryAt;
 	}
 }
