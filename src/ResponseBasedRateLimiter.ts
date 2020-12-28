@@ -2,6 +2,7 @@ import type { LoggerOptions } from '@d-fischer/logger';
 import { Logger } from '@d-fischer/logger';
 import type { PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
 import allSettled from '@d-fischer/promise.allsettled';
+import type { QueueEntry } from './QueueEntry';
 import { RetryAfterError } from './RetryAfterError';
 
 export interface RateLimiterResponseParameters {
@@ -10,10 +11,8 @@ export interface RateLimiterResponseParameters {
 	resetsAt: number;
 }
 
-interface QueueEntry<Req, Res, Err = Error> {
-	req: Req;
-	resolve: (res: Res | PromiseLike<Res>) => void;
-	reject: (err: Err) => void;
+export interface ResponseBasedRateLimiterConfig {
+	logger?: Partial<LoggerOptions>;
 }
 
 export abstract class ResponseBasedRateLimiter<Req, Res> {
@@ -24,8 +23,8 @@ export abstract class ResponseBasedRateLimiter<Req, Res> {
 
 	private readonly _logger: Logger;
 
-	constructor(loggerOptions: Partial<LoggerOptions>) {
-		this._logger = new Logger({ name: 'rate-limiter', emoji: true, ...loggerOptions });
+	constructor({ logger }: ResponseBasedRateLimiterConfig) {
+		this._logger = new Logger({ name: 'rate-limiter', emoji: true, ...logger });
 	}
 
 	async request(req: Req): Promise<Res> {
