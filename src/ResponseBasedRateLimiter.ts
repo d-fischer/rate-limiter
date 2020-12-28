@@ -16,8 +16,7 @@ interface QueueEntry<Req, Res, Err = Error> {
 	reject: (err: Err) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export abstract class ResponseBasedRateLimiter<Req, Res = any> {
+export abstract class ResponseBasedRateLimiter<Req, Res> {
 	private _parameters?: RateLimiterResponseParameters;
 	private readonly _queue: Array<QueueEntry<Req, Res>> = [];
 	private _batchRunning = false;
