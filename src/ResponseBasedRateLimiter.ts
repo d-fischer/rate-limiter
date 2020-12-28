@@ -1,4 +1,4 @@
-import type { LogLevel } from '@d-fischer/logger';
+import type { LoggerOptions } from '@d-fischer/logger';
 import { Logger } from '@d-fischer/logger';
 import type { PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
 import allSettled from '@d-fischer/promise.allsettled';
@@ -25,8 +25,8 @@ export abstract class ResponseBasedRateLimiter<Req, Res = any> {
 
 	private readonly _logger: Logger;
 
-	constructor(logLevel: LogLevel) {
-		this._logger = new Logger({ name: 'rate-limiter', minLevel: logLevel, emoji: true });
+	constructor(loggerOptions: Partial<LoggerOptions>) {
+		this._logger = new Logger({ name: 'rate-limiter', emoji: true, ...loggerOptions });
 	}
 
 	async request(req: Req): Promise<Res> {
