@@ -3,25 +3,28 @@ import type { LoggerOptions } from '@d-fischer/logger';
 import type { QueueEntry } from './QueueEntry';
 import type { RateLimiter } from './RateLimiter';
 
-export interface TimeBasedRateLimiterConfig {
+export interface TimeBasedRateLimiterConfig<Req, Res> {
 	bucketSize: number;
 	timeFrame: number;
 	logger?: LoggerOptions;
+	doRequest: (req: Req) => Promise<Res>;
 }
 
-export abstract class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
+export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 	private readonly _queue: Array<QueueEntry<Req, Res>> = [];
 	private _usedFromBucket: number = 0;
 	private readonly _bucketSize: number;
 	private readonly _timeFrame: number;
+	private readonly _callback: (req: Req) => Promise<Res>;
 
 	private readonly _logger: Logger;
 
-	constructor({ logger, bucketSize, timeFrame }: TimeBasedRateLimiterConfig) {
+	constructor({ logger, bucketSize, timeFrame, doRequest }: TimeBasedRateLimiterConfig<Req, Res>) {
 		this._logger = new Logger({ name: 'rate-limiter', emoji: true, ...logger });
 
 		this._bucketSize = bucketSize;
 		this._timeFrame = timeFrame;
+		this._callback = doRequest;
 	}
 
 	async request(req: Req): Promise<Res> {
@@ -43,14 +46,12 @@ export abstract class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req,
 		});
 	}
 
-	protected abstract doRequest(req: Req): Promise<Res>;
-
 	private async _runRequest(reqSpec: QueueEntry<Req, Res>) {
 		this._logger.debug(`doing a request, new queue length is ${this._queue.length}`);
 		this._usedFromBucket += 1;
 		const { req, resolve, reject } = reqSpec;
 		try {
-			resolve(await this.doRequest(req));
+			resolve(await this._callback(req));
 		} catch (e) {
 			reject(e);
 		} finally {
