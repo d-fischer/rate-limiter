@@ -1,4 +1,5 @@
-import { Logger } from '@d-fischer/logger';
+import type { Logger } from '@d-fischer/logger';
+import { createLogger } from '@d-fischer/logger';
 import type { QueueEntry } from './QueueEntry';
 import type { RateLimiter } from './RateLimiter';
 import type { TimeBasedRateLimiterConfig } from './TimeBasedRateLimiter';
@@ -24,7 +25,7 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 		doRequest,
 		getPartitionKey
 	}: PartitionedTimeBasedRateLimiterConfig<Req, Res>) {
-		this._logger = new Logger({ name: 'rate-limiter', emoji: true, ...logger });
+		this._logger = createLogger({ name: 'rate-limiter', emoji: true, ...logger });
 
 		this._bucketSize = bucketSize;
 		this._timeFrame = timeFrame;
