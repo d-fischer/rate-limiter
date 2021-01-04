@@ -1,5 +1,5 @@
-import type { LoggerOptions } from '@d-fischer/logger';
-import { Logger } from '@d-fischer/logger';
+import type { Logger, LoggerOptionsOrCustom } from '@d-fischer/logger';
+import { createLogger } from '@d-fischer/logger';
 import type { PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
 import allSettled from '@d-fischer/promise.allsettled';
 import type { QueueEntry } from './QueueEntry';
@@ -13,7 +13,7 @@ export interface RateLimiterResponseParameters {
 }
 
 export interface ResponseBasedRateLimiterConfig {
-	logger?: Partial<LoggerOptions>;
+	logger?: Partial<LoggerOptionsOrCustom>;
 }
 
 export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
@@ -25,7 +25,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 	private readonly _logger: Logger;
 
 	constructor({ logger }: ResponseBasedRateLimiterConfig) {
-		this._logger = new Logger({ name: 'rate-limiter', emoji: true, ...logger });
+		this._logger = createLogger({ name: 'rate-limiter', emoji: true, ...logger });
 	}
 
 	async request(req: Req): Promise<Res> {
