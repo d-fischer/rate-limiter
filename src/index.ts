@@ -1,3 +1,4 @@
+export { NullRateLimiter } from './NullRateLimiter';
 export { PartitionedTimeBasedRateLimiter } from './PartitionedTimeBasedRateLimiter';
 export type { RateLimiter } from './RateLimiter';
 export type { RateLimiterResponseParameters, ResponseBasedRateLimiterConfig } from './ResponseBasedRateLimiter';
