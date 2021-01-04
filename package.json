@@ -24,7 +24,7 @@
   "author": "Daniel Fischer <daniel@d-fischer.dev>",
   "license": "MIT",
   "dependencies": {
-    "@d-fischer/logger": "^2.1.1",
+    "@d-fischer/logger": "^3.0.0",
     "@d-fischer/promise.allsettled": "^2.0.1",
     "@types/node": "^12.12.5",
     "tslib": "^2.0.3"

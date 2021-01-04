@@ -36,10 +36,10 @@
     eslint-plugin-import "^2.22.0"
     eslint-plugin-jsdoc "^25.4.3"
 
-"@d-fischer/logger@^2.1.1":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@d-fischer/logger/-/logger-2.1.1.tgz#4c1abecd420188ba7259fdff8012272cb30d162f"
-  integrity sha512-E46n4a6AjSFCptzaQrw9y7FF0H2Rci4KJdi6QzjzqaGAHaxyA9IdpVcfKgpG4CCSTA0F6tD7LbgKNR0XoEHhPg==
+"@d-fischer/logger@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@d-fischer/logger/-/logger-3.0.0.tgz#3bd1842885e1520b5863395d1f62e9d97581a1df"
+  integrity sha512-wVWjfqJ88hpRASFowf1/tSTIkWLTj086OyTVC9vAkM6bI7d8S8Sb3pljzw9TnfXPdVuzkTc5KviANpTOqFZkcQ==
   dependencies:
     detect-node "^2.0.4"
     tslib "^2.0.3"
