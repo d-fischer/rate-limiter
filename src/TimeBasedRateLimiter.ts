@@ -1,6 +1,7 @@
 import { Logger } from '@d-fischer/logger';
 import type { LoggerOptions } from '@d-fischer/logger';
 import type { QueueEntry } from './QueueEntry';
+import type { RateLimiter } from './RateLimiter';
 
 export interface TimeBasedRateLimiterConfig {
 	bucketSize: number;
@@ -8,13 +9,13 @@ export interface TimeBasedRateLimiterConfig {
 	logger?: LoggerOptions;
 }
 
-export abstract class TimeBasedRateLimiter<Req, Res> {
+export abstract class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 	private readonly _queue: Array<QueueEntry<Req, Res>> = [];
 	private _usedFromBucket: number = 0;
 	private readonly _bucketSize: number;
 	private readonly _timeFrame: number;
 
-	private readonly _logger;
+	private readonly _logger: Logger;
 
 	constructor({ logger, bucketSize, timeFrame }: TimeBasedRateLimiterConfig) {
 		this._logger = new Logger({ name: 'rate-limiter', emoji: true, ...logger });

@@ -3,6 +3,7 @@ import { Logger } from '@d-fischer/logger';
 import type { PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
 import allSettled from '@d-fischer/promise.allsettled';
 import type { QueueEntry } from './QueueEntry';
+import type { RateLimiter } from './RateLimiter';
 import { RetryAfterError } from './RetryAfterError';
 
 export interface RateLimiterResponseParameters {
@@ -15,7 +16,7 @@ export interface ResponseBasedRateLimiterConfig {
 	logger?: Partial<LoggerOptions>;
 }
 
-export abstract class ResponseBasedRateLimiter<Req, Res> {
+export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 	private _parameters?: RateLimiterResponseParameters;
 	private readonly _queue: Array<QueueEntry<Req, Res>> = [];
 	private _batchRunning = false;
