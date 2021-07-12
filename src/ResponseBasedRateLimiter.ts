@@ -56,30 +56,28 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 			this._logger.debug(`remaining requests: ${this._parameters.remaining}`);
 		}
 		this._logger.debug(`doing ${reqSpecs.length} requests, new queue length is ${this._queue.length}`);
-		const promises = reqSpecs.map(
-			async (reqSpec): Promise<RateLimiterResponseParameters | undefined> => {
-				const { req, resolve, reject } = reqSpec;
+		const promises = reqSpecs.map(async (reqSpec): Promise<RateLimiterResponseParameters | undefined> => {
+			const { req, resolve, reject } = reqSpec;
 
-				try {
-					const result = await this.doRequest(req);
-					const retry = this.needsToRetryAfter(result);
-					if (retry !== null) {
-						this._queue.unshift(reqSpec);
-						this._logger.info(`Retrying after ${retry} ms`);
-						throw new RetryAfterError(retry);
-					}
-					const params = this.getParametersFromResponse(result);
-					resolve(result);
-					return params;
-				} catch (e) {
-					if (e instanceof RetryAfterError) {
-						throw e;
-					}
-					reject(e);
-					return undefined;
+			try {
+				const result = await this.doRequest(req);
+				const retry = this.needsToRetryAfter(result);
+				if (retry !== null) {
+					this._queue.unshift(reqSpec);
+					this._logger.info(`Retrying after ${retry} ms`);
+					throw new RetryAfterError(retry);
 				}
+				const params = this.getParametersFromResponse(result);
+				resolve(result);
+				return params;
+			} catch (e) {
+				if (e instanceof RetryAfterError) {
+					throw e;
+				}
+				reject(e);
+				return undefined;
 			}
-		);
+		});
 
 		// downleveling problem hack, see https://github.com/es-shims/Promise.allSettled/issues/5
 		const settledPromises = await allSettled.call(Promise, promises);
