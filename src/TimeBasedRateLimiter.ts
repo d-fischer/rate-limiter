@@ -1,4 +1,4 @@
-import type { LoggerOptionsOrCustom, Logger } from '@d-fischer/logger';
+import type { LoggerOptions, Logger } from '@d-fischer/logger';
 import { createLogger } from '@d-fischer/logger';
 import type { QueueEntry } from './QueueEntry';
 import type { RateLimiter } from './RateLimiter';
@@ -6,7 +6,7 @@ import type { RateLimiter } from './RateLimiter';
 export interface TimeBasedRateLimiterConfig<Req, Res> {
 	bucketSize: number;
 	timeFrame: number;
-	logger?: Partial<LoggerOptionsOrCustom>;
+	logger?: Partial<LoggerOptions>;
 	doRequest: (req: Req) => Promise<Res>;
 }
 

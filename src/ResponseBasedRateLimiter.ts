@@ -1,4 +1,4 @@
-import type { Logger, LoggerOptionsOrCustom } from '@d-fischer/logger';
+import type { Logger, LoggerOptions } from '@d-fischer/logger';
 import { createLogger } from '@d-fischer/logger';
 import type { PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
 import allSettled from '@d-fischer/promise.allsettled';
@@ -13,7 +13,7 @@ export interface RateLimiterResponseParameters {
 }
 
 export interface ResponseBasedRateLimiterConfig {
-	logger?: Partial<LoggerOptionsOrCustom>;
+	logger?: Partial<LoggerOptions>;
 }
 
 export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {

@@ -41,11 +41,12 @@
     eslint-plugin-import "^2.22.0"
     eslint-plugin-jsdoc "^25.4.3"
 
-"@d-fischer/logger@^3.1.0":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@d-fischer/logger/-/logger-3.1.0.tgz#d9e24e6f1a2f7a3ae2f93af27a0e26d73bb38138"
-  integrity sha512-kNg9PjmiyH9DMr70mAWU+i+dy3+e1hI0lR+No5RJduQtexI247NmEzNd0pethpwm+1uA0MRf3w9QnqZ1PHKvyA==
+"@d-fischer/logger@^4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@d-fischer/logger/-/logger-4.0.0.tgz#e241de7a392578cb85b23a23666a70e9bacf61dd"
+  integrity sha512-JEP6Wr8itVN2ZS4fY/qmZZRFAnMjGIPBOJVRcnlp2i+fQ7sZUb6a6Ee82E1m1UTfaUMdd9u2ibgVGiAOY1rZxg==
   dependencies:
+    "@d-fischer/shared-utils" "^3.2.0"
     detect-node "^2.0.4"
     tslib "^2.0.3"
 
@@ -60,6 +61,14 @@
     es-abstract "^1.18.0-next.2"
     get-intrinsic "^1.0.2"
     iterate-value "^1.0.2"
+
+"@d-fischer/shared-utils@^3.2.0":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/@d-fischer/shared-utils/-/shared-utils-3.2.0.tgz#4e2fd8aca396707d217375c59ca6a7c6cf3b1ff8"
+  integrity sha512-YgAPpd0jxtchZlEqvVmL21A+/Ottx5759s6THiJs0o5+8pPIrshBlULhmfunbaidHmViuUhjxzZfqRkYl0MR9g==
+  dependencies:
+    "@types/node" "^14.11.2"
+    tslib "^2.0.3"
 
 "@eslint/eslintrc@^0.4.2":
   version "0.4.2"
@@ -218,6 +227,11 @@
   version "12.20.16"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.20.16.tgz#1acf34f6456208f495dac0434dd540488d17f991"
   integrity sha512-6CLxw83vQf6DKqXxMPwl8qpF8I7THFZuIwLt4TnNsumxkp1VsRZWT8txQxncT/Rl2UojTsFzWgDG4FRMwafrlA==
+
+"@types/node@^14.11.2":
+  version "14.17.5"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.17.5.tgz#b59daf6a7ffa461b5648456ca59050ba8e40ed54"
+  integrity sha512-bjqH2cX/O33jXT/UmReo2pM7DIJREPMnarixbQ57DOOzzFaI6D2+IcwaJQaJpv0M1E9TIhPCYVxrkcityLjlqA==
 
 "@types/parse-json@^4.0.0":
   version "4.0.0"
