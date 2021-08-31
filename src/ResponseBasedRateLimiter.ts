@@ -53,9 +53,9 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 	private async _runRequestBatch(reqSpecs: Array<QueueEntry<Req, Res>>) {
 		this._batchRunning = true;
 		if (this._parameters) {
-			this._logger.debug(`remaining requests: ${this._parameters.remaining}`);
+			this._logger.debug(`Remaining requests: ${this._parameters.remaining}`);
 		}
-		this._logger.debug(`doing ${reqSpecs.length} requests, new queue length is ${this._queue.length}`);
+		this._logger.debug(`Doing ${reqSpecs.length} requests, new queue length is ${this._queue.length}`);
 		const promises = reqSpecs.map(async (reqSpec): Promise<RateLimiterResponseParameters | undefined> => {
 			const { req, resolve, reject } = reqSpec;
 
@@ -92,7 +92,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 				...rejectedPromises.map((p: PromiseRejection<RetryAfterError>) => p.reason.retryAt)
 			);
 			const retryAfter = retryAt - now;
-			this._logger.warn(`waiting for ${retryAfter} ms because the rate limit was exceeded`);
+			this._logger.warn(`Waiting for ${retryAfter} ms because the rate limit was exceeded`);
 			this._nextBatchTimer = setTimeout(() => {
 				this._parameters = undefined;
 				void this._runNextBatch();
