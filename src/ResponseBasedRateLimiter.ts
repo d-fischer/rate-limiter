@@ -102,7 +102,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 			this._logger.warn(`Waiting for ${retryAfter} ms because the rate limit was exceeded`);
 			this._nextBatchTimer = setTimeout(() => {
 				this._parameters = undefined;
-				void this._runNextBatch();
+				this._runNextBatch();
 			}, retryAfter);
 		} else {
 			this._logger.trace('runRequestBatch none rejected');
@@ -125,15 +125,19 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 			if (params) {
 				this._parameters = params;
 				if (params.resetsAt < now || params.remaining > 0) {
-					this._logger.trace('runRequestBatch canRunMore');
-					void this._runNextBatch();
+					this._logger.trace(
+						`runRequestBatch canRunMore now:${now} reset:${params.resetsAt} sinceMs:${
+							now - params.resetsAt
+						} remaining:${params.remaining}`
+					);
+					this._runNextBatch();
 				} else {
 					const delay = params.resetsAt - now;
 					this._logger.trace(`runRequestBatch delay:${delay}`);
 					this._logger.warn(`Waiting for ${delay} ms because the rate limit was reached`);
 					this._nextBatchTimer = setTimeout(() => {
 						this._parameters = undefined;
-						void this._runNextBatch();
+						this._runNextBatch();
 					}, delay);
 				}
 			}
@@ -141,16 +145,30 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 		this._logger.trace('runRequestBatch end');
 	}
 
-	private async _runNextBatch() {
+	private _runNextBatch() {
 		this._logger.trace('runNextBatch start');
 		if (this._nextBatchTimer) {
 			clearTimeout(this._nextBatchTimer);
 			this._nextBatchTimer = undefined;
 		}
-		const amount = this._parameters ? Math.min(this._parameters.remaining, this._parameters.limit / 10) : 1;
-		const reqSpecs = this._queue.splice(0, amount);
-		if (reqSpecs.length) {
-			void this._runRequestBatch(reqSpecs);
+		const now = Date.now();
+		const params = this._parameters;
+		if (this._queue.length) {
+			if (!params || params.remaining) {
+				const amount = params ? Math.min(params.remaining, params.limit / 10) : 1;
+				this._logger.trace(`runNextBatch run amount:${amount}`);
+				const reqSpecs = this._queue.splice(0, amount);
+				if (reqSpecs.length) {
+					void this._runRequestBatch(reqSpecs);
+				}
+			} else {
+				const delay = params.resetsAt - now;
+				this._logger.trace(`runNextBatch delayed now:${now} reset:${params.resetsAt} delay:${delay}`);
+				this._nextBatchTimer = setTimeout(() => {
+					this._parameters = undefined;
+					this._runNextBatch();
+				}, delay);
+			}
 		}
 		this._logger.trace('runNextBatch end');
 	}
