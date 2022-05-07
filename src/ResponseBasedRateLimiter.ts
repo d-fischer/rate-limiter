@@ -149,6 +149,8 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 						void this._runNextBatch();
 					}, delay);
 				}
+			} else {
+				void this._runNextBatch();
 			}
 		}
 		this._logger.trace('runRequestBatch end');
