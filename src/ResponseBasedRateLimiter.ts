@@ -2,6 +2,7 @@ import type { Logger, LoggerOptions } from '@d-fischer/logger';
 import { createLogger } from '@d-fischer/logger';
 import type { PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
 import allSettled from '@d-fischer/promise.allsettled';
+import { mapNullable } from '@d-fischer/shared-utils';
 import type { QueueEntry } from './QueueEntry';
 import type { RateLimiter } from './RateLimiter';
 import { RetryAfterError } from './RetryAfterError';
@@ -47,6 +48,18 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 				void this._runRequestBatch([reqSpec]);
 			}
 		});
+	}
+
+	get lastKnownLimit(): number | null {
+		return this._parameters?.limit ?? null;
+	}
+
+	get lastKnownRemainingRequests(): number | null {
+		return this._parameters?.remaining ?? null;
+	}
+
+	get lastKnownResetDate(): Date | null {
+		return mapNullable(this._parameters?.resetsAt, v => new Date(v));
 	}
 
 	protected abstract doRequest(req: Req): Promise<Res>;
