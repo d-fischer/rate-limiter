@@ -135,7 +135,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 				}, undefined);
 
 			this._batchRunning = false;
-			if (params) {
+			if (params?.limit) {
 				this._parameters = params;
 				if (params.resetsAt < now || params.remaining > 0) {
 					this._logger.trace('runRequestBatch canRunMore');
