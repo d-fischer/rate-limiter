@@ -11,6 +11,7 @@ node_modules/
 /lib
 /es
 package-lock.json
+yarn.lock
 *.code-workspace
 yalc.lock
 /.yalc
