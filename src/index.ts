@@ -6,3 +6,5 @@ export { ResponseBasedRateLimiter } from './ResponseBasedRateLimiter';
 export { RetryAfterError } from './RetryAfterError';
 export { TimeBasedRateLimiter } from './TimeBasedRateLimiter';
 export { TimedPassthruRateLimiter } from './TimedPassthruRateLimiter';
+export type { QueueEntryLimitReachedBehavior } from './QueueEntry';
+export { RateLimitReachedError } from './RateLimitReachedError';

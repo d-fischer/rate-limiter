@@ -1,7 +1,8 @@
 import type { Logger } from '@d-fischer/logger';
 import { createLogger } from '@d-fischer/logger';
 import type { QueueEntry } from './QueueEntry';
-import type { RateLimiter } from './RateLimiter';
+import type { RateLimiter, RateLimiterRequestOptions } from './RateLimiter';
+import { RateLimitReachedError } from './RateLimitReachedError';
 import type { TimeBasedRateLimiterConfig } from './TimeBasedRateLimiter';
 
 export interface PartitionedTimeBasedRateLimiterConfig<Req, Res> extends TimeBasedRateLimiterConfig<Req, Res> {
@@ -33,22 +34,46 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 		this._partitionKeyCallback = getPartitionKey;
 	}
 
-	async request(req: Req): Promise<Res> {
+	async request(req: Req, options?: RateLimiterRequestOptions): Promise<Res> {
 		return new Promise((resolve, reject) => {
 			const reqSpec: QueueEntry<Req, Res> = {
 				req,
 				resolve,
-				reject
+				reject,
+				limitReachedBehavior: options?.limitReachedBehavior ?? 'enqueue'
 			};
 
 			const partitionKey = this._partitionKeyCallback(req);
 			const usedFromBucket = this._usedFromBucket.get(partitionKey) ?? 0;
 			if (usedFromBucket >= this._bucketSize) {
-				const queue = this._getPartitionedQueue(partitionKey);
-				queue.push(reqSpec);
-				this._logger.warn(
-					`Rate limit of ${this._bucketSize} for partition ${partitionKey} was reached, waiting for a free bucket entry; queue size is ${queue.length}`
-				);
+				switch (reqSpec.limitReachedBehavior) {
+					case 'enqueue': {
+						const queue = this._getPartitionedQueue(partitionKey);
+						queue.push(reqSpec);
+						this._logger.warn(
+							`Rate limit of ${this._bucketSize} for partition ${partitionKey} was reached, waiting for a free bucket entry; queue size is ${queue.length}`
+						);
+						break;
+					}
+					case 'null': {
+						reqSpec.resolve(null!);
+						this._logger.warn(
+							`Rate limit of ${this._bucketSize} for partition ${partitionKey} was reached, dropping request and returning null`
+						);
+						break;
+					}
+					case 'throw': {
+						reqSpec.reject(
+							new RateLimitReachedError(
+								`Request dropped because the rate limit for partition ${partitionKey} was reached`
+							)
+						);
+						break;
+					}
+					default: {
+						throw new Error('this should never happen');
+					}
+				}
 			} else {
 				void this._runRequest(reqSpec, partitionKey);
 			}

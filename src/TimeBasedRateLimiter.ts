@@ -1,7 +1,8 @@
 import type { LoggerOptions, Logger } from '@d-fischer/logger';
 import { createLogger } from '@d-fischer/logger';
 import type { QueueEntry } from './QueueEntry';
-import type { RateLimiter } from './RateLimiter';
+import type { RateLimiter, RateLimiterRequestOptions } from './RateLimiter';
+import { RateLimitReachedError } from './RateLimitReachedError';
 
 export interface TimeBasedRateLimiterConfig<Req, Res> {
 	bucketSize: number;
@@ -27,19 +28,39 @@ export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 		this._callback = doRequest;
 	}
 
-	async request(req: Req): Promise<Res> {
+	async request(req: Req, options?: RateLimiterRequestOptions): Promise<Res> {
 		return new Promise((resolve, reject) => {
 			const reqSpec: QueueEntry<Req, Res> = {
 				req,
 				resolve,
-				reject
+				reject,
+				limitReachedBehavior: options?.limitReachedBehavior ?? 'enqueue'
 			};
 
 			if (this._usedFromBucket >= this._bucketSize) {
-				this._queue.push(reqSpec);
-				this._logger.warn(
-					`Rate limit of ${this._bucketSize} was reached, waiting for a free bucket entry; queue size is ${this._queue.length}`
-				);
+				switch (reqSpec.limitReachedBehavior) {
+					case 'enqueue': {
+						this._queue.push(reqSpec);
+						this._logger.warn(
+							`Rate limit of ${this._bucketSize} was reached, waiting for a free bucket entry; queue size is ${this._queue.length}`
+						);
+						break;
+					}
+					case 'null': {
+						reqSpec.resolve(null!);
+						this._logger.warn(
+							`Rate limit of ${this._bucketSize} was reached, dropping request and returning null`
+						);
+						break;
+					}
+					case 'throw': {
+						reqSpec.reject(new RateLimitReachedError('Request dropped because the rate limit was reached'));
+						break;
+					}
+					default: {
+						throw new Error('this should never happen');
+					}
+				}
 			} else {
 				void this._runRequest(reqSpec);
 			}

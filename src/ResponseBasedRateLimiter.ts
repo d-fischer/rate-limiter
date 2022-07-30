@@ -4,7 +4,8 @@ import type { PromiseRejection, PromiseResolution } from '@d-fischer/promise.all
 import allSettled from '@d-fischer/promise.allsettled';
 import { mapNullable } from '@d-fischer/shared-utils';
 import type { QueueEntry } from './QueueEntry';
-import type { RateLimiter } from './RateLimiter';
+import type { RateLimiter, RateLimiterRequestOptions } from './RateLimiter';
+import { RateLimitReachedError } from './RateLimitReachedError';
 import { RetryAfterError } from './RetryAfterError';
 
 export interface RateLimiterResponseParameters {
@@ -19,7 +20,7 @@ export interface ResponseBasedRateLimiterConfig {
 
 export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 	private _parameters?: RateLimiterResponseParameters;
-	private readonly _queue: Array<QueueEntry<Req, Res>> = [];
+	private _queue: Array<QueueEntry<Req, Res>> = [];
 	private _batchRunning = false;
 	private _nextBatchTimer?: NodeJS.Timer;
 
@@ -29,13 +30,14 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 		this._logger = createLogger({ name: 'rate-limiter', emoji: true, ...logger });
 	}
 
-	async request(req: Req): Promise<Res> {
+	async request(req: Req, options?: RateLimiterRequestOptions): Promise<Res> {
 		this._logger.trace('request start');
 		return new Promise<Res>((resolve, reject) => {
 			const reqSpec: QueueEntry<Req, Res> = {
 				req,
 				resolve,
-				reject
+				reject,
+				limitReachedBehavior: options?.limitReachedBehavior ?? 'enqueue'
 			};
 
 			if (this._batchRunning || this._nextBatchTimer) {
@@ -144,6 +146,28 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 					const delay = params.resetsAt - now;
 					this._logger.trace(`runRequestBatch delay:${delay}`);
 					this._logger.warn(`Waiting for ${delay} ms because the rate limit was reached`);
+					this._queue = this._queue.filter(entry => {
+						switch (entry.limitReachedBehavior) {
+							case 'enqueue': {
+								return true;
+							}
+							case 'null': {
+								entry.resolve(null!);
+								return false;
+							}
+							case 'throw': {
+								entry.reject(
+									new RateLimitReachedError(
+										'Request removed from queue because the rate limit was reached'
+									)
+								);
+								return false;
+							}
+							default: {
+								throw new Error('this should never happen');
+							}
+						}
+					});
 					this._nextBatchTimer = setTimeout(() => {
 						this._parameters = undefined;
 						void this._runNextBatch();
