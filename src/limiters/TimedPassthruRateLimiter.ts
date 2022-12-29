@@ -1,4 +1,4 @@
-import type { RateLimiter, RateLimiterRequestOptions } from './RateLimiter';
+import type { RateLimiter, RateLimiterRequestOptions } from '../RateLimiter';
 import type { TimeBasedRateLimiterConfig } from './TimeBasedRateLimiter';
 import { TimeBasedRateLimiter } from './TimeBasedRateLimiter';
 
@@ -7,7 +7,7 @@ export class TimedPassthruRateLimiter<Req, Res> extends TimeBasedRateLimiter<Req
 		super({
 			...config,
 			async doRequest(req: Req, options?: RateLimiterRequestOptions): Promise<Res> {
-				return child.request(req, options);
+				return await child.request(req, options);
 			}
 		});
 	}

@@ -3,10 +3,10 @@ import { createLogger } from '@d-fischer/logger';
 import type { PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
 import allSettled from '@d-fischer/promise.allsettled';
 import { mapNullable } from '@d-fischer/shared-utils';
-import type { QueueEntry } from './QueueEntry';
-import type { RateLimiter, RateLimiterRequestOptions } from './RateLimiter';
-import { RateLimitReachedError } from './RateLimitReachedError';
-import { RetryAfterError } from './RetryAfterError';
+import type { QueueEntry } from '../QueueEntry';
+import type { RateLimiter, RateLimiterRequestOptions } from '../RateLimiter';
+import { RateLimitReachedError } from '../errors/RateLimitReachedError';
+import { RetryAfterError } from '../errors/RetryAfterError';
 
 export interface RateLimiterResponseParameters {
 	limit: number;
@@ -32,7 +32,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 
 	async request(req: Req, options?: RateLimiterRequestOptions): Promise<Res> {
 		this._logger.trace('request start');
-		return new Promise<Res>((resolve, reject) => {
+		return await new Promise<Res>((resolve, reject) => {
 			const reqSpec: QueueEntry<Req, Res> = {
 				req,
 				resolve,
@@ -95,7 +95,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 				if (e instanceof RetryAfterError) {
 					throw e;
 				}
-				reject(e);
+				reject(e as Error);
 				return undefined;
 			}
 		});

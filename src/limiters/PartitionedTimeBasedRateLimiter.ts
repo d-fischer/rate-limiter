@@ -1,21 +1,21 @@
 import type { Logger } from '@d-fischer/logger';
 import { createLogger } from '@d-fischer/logger';
-import type { QueueEntry } from './QueueEntry';
-import type { RateLimiter, RateLimiterRequestOptions } from './RateLimiter';
-import { RateLimitReachedError } from './RateLimitReachedError';
+import type { QueueEntry } from '../QueueEntry';
+import type { RateLimiter, RateLimiterRequestOptions } from '../RateLimiter';
+import { RateLimitReachedError } from '../errors/RateLimitReachedError';
 import type { TimeBasedRateLimiterConfig } from './TimeBasedRateLimiter';
 
 export interface PartitionedTimeBasedRateLimiterConfig<Req, Res> extends TimeBasedRateLimiterConfig<Req, Res> {
-	getPartitionKey: (req: Req) => string;
+	getPartitionKey: (req: Req) => string | null;
 }
 
 export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
-	private readonly _partitionedQueue = new Map<string, Array<QueueEntry<Req, Res>>>();
-	private readonly _usedFromBucket = new Map<string, number>();
+	private readonly _partitionedQueue = new Map<string | null, Array<QueueEntry<Req, Res>>>();
+	private readonly _usedFromBucket = new Map<string | null, number>();
 	private readonly _bucketSize: number;
 	private readonly _timeFrame: number;
 	private readonly _callback: (req: Req) => Promise<Res>;
-	private readonly _partitionKeyCallback: (req: Req) => string;
+	private readonly _partitionKeyCallback: (req: Req) => string | null;
 
 	private readonly _logger: Logger;
 
@@ -35,7 +35,7 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 	}
 
 	async request(req: Req, options?: RateLimiterRequestOptions): Promise<Res> {
-		return new Promise((resolve, reject) => {
+		return await new Promise((resolve, reject) => {
 			const reqSpec: QueueEntry<Req, Res> = {
 				req,
 				resolve,
@@ -51,21 +51,27 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 						const queue = this._getPartitionedQueue(partitionKey);
 						queue.push(reqSpec);
 						this._logger.warn(
-							`Rate limit of ${this._bucketSize} for partition ${partitionKey} was reached, waiting for a free bucket entry; queue size is ${queue.length}`
+							`Rate limit of ${this._bucketSize} for ${
+								partitionKey ? `partition ${partitionKey}` : 'default partition'
+							} was reached, waiting for a free bucket entry; queue size is ${queue.length}`
 						);
 						break;
 					}
 					case 'null': {
 						reqSpec.resolve(null!);
 						this._logger.warn(
-							`Rate limit of ${this._bucketSize} for partition ${partitionKey} was reached, dropping request and returning null`
+							`Rate limit of ${this._bucketSize} for ${
+								partitionKey ? `partition ${partitionKey}` : 'default partition'
+							} was reached, dropping request and returning null`
 						);
 						break;
 					}
 					case 'throw': {
 						reqSpec.reject(
 							new RateLimitReachedError(
-								`Request dropped because the rate limit for partition ${partitionKey} was reached`
+								`Request dropped because the rate limit for ${
+									partitionKey ? `partition ${partitionKey}` : 'default partition'
+								} was reached`
 							)
 						);
 						break;
@@ -80,7 +86,7 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 		});
 	}
 
-	private _getPartitionedQueue(partitionKey: string): Array<QueueEntry<Req, Res>> {
+	private _getPartitionedQueue(partitionKey: string | null): Array<QueueEntry<Req, Res>> {
 		if (this._partitionedQueue.has(partitionKey)) {
 			return this._partitionedQueue.get(partitionKey)!;
 		}
@@ -90,15 +96,19 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 		return newQueue;
 	}
 
-	private async _runRequest(reqSpec: QueueEntry<Req, Res>, partitionKey: string) {
+	private async _runRequest(reqSpec: QueueEntry<Req, Res>, partitionKey: string | null) {
 		const queue = this._getPartitionedQueue(partitionKey);
-		this._logger.debug(`doing a request for partiton ${partitionKey}, new queue length is ${queue.length}`);
+		this._logger.debug(
+			`doing a request for ${
+				partitionKey ? `partition ${partitionKey}` : 'default partition'
+			}, new queue length is ${queue.length}`
+		);
 		this._usedFromBucket.set(partitionKey, (this._usedFromBucket.get(partitionKey) ?? 0) + 1);
 		const { req, resolve, reject } = reqSpec;
 		try {
 			resolve(await this._callback(req));
 		} catch (e) {
-			reject(e);
+			reject(e as Error);
 		} finally {
 			setTimeout(() => {
 				const newUsed = this._usedFromBucket.get(partitionKey)! - 1;
@@ -110,7 +120,7 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 		}
 	}
 
-	private _runNextRequest(partitionKey: string) {
+	private _runNextRequest(partitionKey: string | null) {
 		const queue = this._getPartitionedQueue(partitionKey);
 		const reqSpec = queue.shift();
 		if (reqSpec) {

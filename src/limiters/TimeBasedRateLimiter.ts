@@ -1,8 +1,8 @@
 import type { LoggerOptions, Logger } from '@d-fischer/logger';
 import { createLogger } from '@d-fischer/logger';
-import type { QueueEntry } from './QueueEntry';
-import type { RateLimiter, RateLimiterRequestOptions } from './RateLimiter';
-import { RateLimitReachedError } from './RateLimitReachedError';
+import type { QueueEntry } from '../QueueEntry';
+import type { RateLimiter, RateLimiterRequestOptions } from '../RateLimiter';
+import { RateLimitReachedError } from '../errors/RateLimitReachedError';
 
 export interface TimeBasedRateLimiterConfig<Req, Res> {
 	bucketSize: number;
@@ -29,7 +29,7 @@ export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 	}
 
 	async request(req: Req, options?: RateLimiterRequestOptions): Promise<Res> {
-		return new Promise((resolve, reject) => {
+		return await new Promise((resolve, reject) => {
 			const reqSpec: QueueEntry<Req, Res> = {
 				req,
 				resolve,
@@ -74,7 +74,7 @@ export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 		try {
 			resolve(await this._callback(req));
 		} catch (e) {
-			reject(e);
+			reject(e as Error);
 		} finally {
 			setTimeout(() => {
 				this._usedFromBucket -= 1;

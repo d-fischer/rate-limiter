@@ -1,10 +1,14 @@
-export { NullRateLimiter } from './NullRateLimiter';
-export { PartitionedTimeBasedRateLimiter } from './PartitionedTimeBasedRateLimiter';
+export { NullRateLimiter } from './limiters/NullRateLimiter';
+export { PartitionedRateLimiter, type PartitionedRateLimiterOptions } from './limiters/PartitionedRateLimiter';
+export { PartitionedTimeBasedRateLimiter } from './limiters/PartitionedTimeBasedRateLimiter';
 export type { RateLimiter, RateLimiterRequestOptions } from './RateLimiter';
-export type { RateLimiterResponseParameters, ResponseBasedRateLimiterConfig } from './ResponseBasedRateLimiter';
-export { ResponseBasedRateLimiter } from './ResponseBasedRateLimiter';
-export { RetryAfterError } from './RetryAfterError';
-export { TimeBasedRateLimiter } from './TimeBasedRateLimiter';
-export { TimedPassthruRateLimiter } from './TimedPassthruRateLimiter';
+export type {
+	RateLimiterResponseParameters,
+	ResponseBasedRateLimiterConfig
+} from './limiters/ResponseBasedRateLimiter';
+export { ResponseBasedRateLimiter } from './limiters/ResponseBasedRateLimiter';
+export { RetryAfterError } from './errors/RetryAfterError';
+export { TimeBasedRateLimiter } from './limiters/TimeBasedRateLimiter';
+export { TimedPassthruRateLimiter } from './limiters/TimedPassthruRateLimiter';
 export type { QueueEntryLimitReachedBehavior } from './QueueEntry';
-export { RateLimitReachedError } from './RateLimitReachedError';
+export { RateLimitReachedError } from './errors/RateLimitReachedError';
