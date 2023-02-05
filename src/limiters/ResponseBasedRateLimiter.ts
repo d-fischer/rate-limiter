@@ -7,6 +7,7 @@ import type { QueueEntry } from '../QueueEntry';
 import type { RateLimiter, RateLimiterRequestOptions } from '../RateLimiter';
 import { RateLimitReachedError } from '../errors/RateLimitReachedError';
 import { RetryAfterError } from '../errors/RetryAfterError';
+import { type RateLimiterStats } from '../RateLimiterStats';
 
 export interface RateLimiterResponseParameters {
 	limit: number;
@@ -52,16 +53,12 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 		});
 	}
 
-	get lastKnownLimit(): number | null {
-		return this._parameters?.limit ?? null;
-	}
-
-	get lastKnownRemainingRequests(): number | null {
-		return this._parameters?.remaining ?? null;
-	}
-
-	get lastKnownResetDate(): Date | null {
-		return mapNullable(this._parameters?.resetsAt, v => new Date(v));
+	get stats(): RateLimiterStats {
+		return {
+			lastKnownLimit: this._parameters?.limit ?? null,
+			lastKnownRemainingRequests: this._parameters?.remaining ?? null,
+			lastKnownResetDate: mapNullable(this._parameters?.resetsAt, v => new Date(v))
+		};
 	}
 
 	protected abstract doRequest(req: Req): Promise<Res>;

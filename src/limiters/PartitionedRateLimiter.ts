@@ -1,4 +1,6 @@
 import { type RateLimiter, type RateLimiterRequestOptions } from '../RateLimiter';
+import { type RateLimiterStats } from '../RateLimiterStats';
+import { ResponseBasedRateLimiter } from './ResponseBasedRateLimiter';
 
 export interface PartitionedRateLimiterOptions<Req, Res> {
 	getPartitionKey: (req: Req) => string | null;
@@ -20,6 +22,20 @@ export class PartitionedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 		const partitionChild = this._getChild(partitionKey);
 
 		return await partitionChild.request(req, options);
+	}
+
+	getChildStats(partitionKey: string | null): RateLimiterStats | null {
+		if (!this._children.has(partitionKey)) {
+			return null;
+		}
+
+		const child = this._children.get(partitionKey)!;
+
+		if (!(child instanceof ResponseBasedRateLimiter)) {
+			return null;
+		}
+
+		return child.stats;
 	}
 
 	private _getChild(partitionKey: string | null): RateLimiter<Req, Res> {
