@@ -17,6 +17,8 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 	private readonly _callback: (req: Req) => Promise<Res>;
 	private readonly _partitionKeyCallback: (req: Req) => string | null;
 
+	private _paused = false;
+
 	private readonly _logger: Logger;
 
 	constructor({
@@ -45,7 +47,7 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 
 			const partitionKey = this._partitionKeyCallback(req);
 			const usedFromBucket = this._usedFromBucket.get(partitionKey) ?? 0;
-			if (usedFromBucket >= this._bucketSize) {
+			if (usedFromBucket >= this._bucketSize || this._paused) {
 				switch (reqSpec.limitReachedBehavior) {
 					case 'enqueue': {
 						const queue = this._getPartitionedQueue(partitionKey);
@@ -86,6 +88,21 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 		});
 	}
 
+	clear(): void {
+		this._partitionedQueue.clear();
+	}
+
+	pause(): void {
+		this._paused = true;
+	}
+
+	resume(): void {
+		this._paused = false;
+		for (const partitionKey of this._partitionedQueue.keys()) {
+			this._runNextRequest(partitionKey);
+		}
+	}
+
 	private _getPartitionedQueue(partitionKey: string | null): Array<QueueEntry<Req, Res>> {
 		if (this._partitionedQueue.has(partitionKey)) {
 			return this._partitionedQueue.get(partitionKey)!;
@@ -121,6 +138,9 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 	}
 
 	private _runNextRequest(partitionKey: string | null) {
+		if (this._paused) {
+			return;
+		}
 		const queue = this._getPartitionedQueue(partitionKey);
 		const reqSpec = queue.shift();
 		if (reqSpec) {

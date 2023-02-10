@@ -6,4 +6,16 @@ export class NullRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 	async request(req: Req): Promise<Res> {
 		return await this._callback(req);
 	}
+
+	clear(): void {
+		// noop
+	}
+
+	pause(): void {
+		// noop
+	}
+
+	resume(): void {
+		// noop
+	}
 }

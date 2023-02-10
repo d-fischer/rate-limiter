@@ -25,6 +25,8 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 	private _batchRunning = false;
 	private _nextBatchTimer?: NodeJS.Timer;
 
+	private _paused = false;
+
 	private readonly _logger: Logger;
 
 	constructor({ logger }: ResponseBasedRateLimiterConfig) {
@@ -41,16 +43,29 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 				limitReachedBehavior: options?.limitReachedBehavior ?? 'enqueue'
 			};
 
-			if (this._batchRunning || this._nextBatchTimer) {
+			if (this._batchRunning || this._nextBatchTimer || this._paused) {
 				this._logger.trace(
 					`request queued batchRunning:${this._batchRunning.toString()} hasNextBatchTimer:${(!!this
-						._nextBatchTimer).toString()}`
+						._nextBatchTimer).toString()} paused:${this._paused.toString()}`
 				);
 				this._queue.push(reqSpec);
 			} else {
 				void this._runRequestBatch([reqSpec]);
 			}
 		});
+	}
+
+	clear(): void {
+		this._queue = [];
+	}
+
+	pause(): void {
+		this._paused = true;
+	}
+
+	resume(): void {
+		this._paused = false;
+		this._runNextBatch();
 	}
 
 	get stats(): RateLimiterStats {
@@ -114,7 +129,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 			this._logger.warn(`Waiting for ${retryAfter} ms because the rate limit was exceeded`);
 			this._nextBatchTimer = setTimeout(() => {
 				this._parameters = undefined;
-				void this._runNextBatch();
+				this._runNextBatch();
 			}, retryAfter);
 		} else {
 			this._logger.trace('runRequestBatch none rejected');
@@ -138,7 +153,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 				this._parameters = params;
 				if (params.resetsAt < now || params.remaining > 0) {
 					this._logger.trace('runRequestBatch canRunMore');
-					void this._runNextBatch();
+					this._runNextBatch();
 				} else {
 					const delay = params.resetsAt - now;
 					this._logger.trace(`runRequestBatch delay:${delay}`);
@@ -167,7 +182,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 					});
 					this._nextBatchTimer = setTimeout(() => {
 						this._parameters = undefined;
-						void this._runNextBatch();
+						this._runNextBatch();
 					}, delay);
 				}
 			}
@@ -175,7 +190,10 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 		this._logger.trace('runRequestBatch end');
 	}
 
-	private async _runNextBatch() {
+	private _runNextBatch() {
+		if (this._paused) {
+			return;
+		}
 		this._logger.trace('runNextBatch start');
 		if (this._nextBatchTimer) {
 			clearTimeout(this._nextBatchTimer);

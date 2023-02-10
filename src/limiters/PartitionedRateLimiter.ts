@@ -12,6 +12,8 @@ export class PartitionedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 	private readonly _partitionKeyCallback: (req: Req) => string | null;
 	private readonly _createChildCallback: (partitionKey: string | null) => RateLimiter<Req, Res>;
 
+	private _paused = false;
+
 	constructor(options: PartitionedRateLimiterOptions<Req, Res>) {
 		this._partitionKeyCallback = options.getPartitionKey;
 		this._createChildCallback = options.createChild;
@@ -22,6 +24,26 @@ export class PartitionedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 		const partitionChild = this._getChild(partitionKey);
 
 		return await partitionChild.request(req, options);
+	}
+
+	clear(): void {
+		for (const child of this._children.values()) {
+			child.clear();
+		}
+	}
+
+	pause(): void {
+		this._paused = true;
+		for (const child of this._children.values()) {
+			child.pause();
+		}
+	}
+
+	resume(): void {
+		this._paused = false;
+		for (const child of this._children.values()) {
+			child.resume();
+		}
 	}
 
 	getChildStats(partitionKey: string | null): RateLimiterStats | null {
@@ -44,6 +66,9 @@ export class PartitionedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 		}
 
 		const result = this._createChildCallback(partitionKey);
+		if (this._paused) {
+			result.pause();
+		}
 		this._children.set(partitionKey, result);
 		return result;
 	}

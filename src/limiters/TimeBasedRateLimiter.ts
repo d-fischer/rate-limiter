@@ -12,11 +12,13 @@ export interface TimeBasedRateLimiterConfig<Req, Res> {
 }
 
 export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
-	private readonly _queue: Array<QueueEntry<Req, Res>> = [];
+	private _queue: Array<QueueEntry<Req, Res>> = [];
 	private _usedFromBucket: number = 0;
 	private readonly _bucketSize: number;
 	private readonly _timeFrame: number;
 	private readonly _callback: (req: Req) => Promise<Res>;
+
+	private _paused = false;
 
 	private readonly _logger: Logger;
 
@@ -37,7 +39,7 @@ export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 				limitReachedBehavior: options?.limitReachedBehavior ?? 'enqueue'
 			};
 
-			if (this._usedFromBucket >= this._bucketSize) {
+			if (this._usedFromBucket >= this._bucketSize || this._paused) {
 				switch (reqSpec.limitReachedBehavior) {
 					case 'enqueue': {
 						this._queue.push(reqSpec);
@@ -67,6 +69,19 @@ export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 		});
 	}
 
+	clear(): void {
+		this._queue = [];
+	}
+
+	pause(): void {
+		this._paused = true;
+	}
+
+	resume(): void {
+		this._paused = false;
+		this._runNextRequest();
+	}
+
 	private async _runRequest(reqSpec: QueueEntry<Req, Res>) {
 		this._logger.debug(`doing a request, new queue length is ${this._queue.length}`);
 		this._usedFromBucket += 1;
@@ -86,6 +101,9 @@ export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 	}
 
 	private _runNextRequest() {
+		if (this._paused) {
+			return;
+		}
 		const reqSpec = this._queue.shift();
 		if (reqSpec) {
 			void this._runRequest(reqSpec);

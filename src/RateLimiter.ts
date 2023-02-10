@@ -6,4 +6,7 @@ export interface RateLimiterRequestOptions {
 
 export interface RateLimiter<Req, Res> {
 	request: (req: Req, options?: RateLimiterRequestOptions) => Promise<Res>;
+	clear: () => void;
+	pause: () => void;
+	resume: () => void;
 }
