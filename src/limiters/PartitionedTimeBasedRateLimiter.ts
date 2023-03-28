@@ -52,28 +52,50 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 					case 'enqueue': {
 						const queue = this._getPartitionedQueue(partitionKey);
 						queue.push(reqSpec);
-						this._logger.warn(
-							`Rate limit of ${this._bucketSize} for ${
-								partitionKey ? `partition ${partitionKey}` : 'default partition'
-							} was reached, waiting for a free bucket entry; queue size is ${queue.length}`
-						);
+						if (usedFromBucket + queue.length >= this._bucketSize) {
+							this._logger.warn(
+								`Rate limit of ${this._bucketSize} for ${
+									partitionKey ? `partition ${partitionKey}` : 'default partition'
+								} was reached, waiting for ${
+									this._paused ? 'the limiter to be unpaused' : 'a free bucket entry'
+								}; queue size is ${queue.length}`
+							);
+						} else {
+							this._logger.info(
+								`Enqueueing request for ${
+									partitionKey ? `partition ${partitionKey}` : 'default partition'
+								} because the rate limiter is paused; queue size is ${queue.length}`
+							);
+						}
 						break;
 					}
 					case 'null': {
 						reqSpec.resolve(null!);
-						this._logger.warn(
-							`Rate limit of ${this._bucketSize} for ${
-								partitionKey ? `partition ${partitionKey}` : 'default partition'
-							} was reached, dropping request and returning null`
-						);
+						if (this._paused) {
+							this._logger.info(
+								`Returning null for request for ${
+									partitionKey ? `partition ${partitionKey}` : 'default partition'
+								} because the rate limiter is paused`
+							);
+						} else {
+							this._logger.warn(
+								`Rate limit of ${this._bucketSize} for ${
+									partitionKey ? `partition ${partitionKey}` : 'default partition'
+								} was reached, dropping request and returning null`
+							);
+						}
 						break;
 					}
 					case 'throw': {
 						reqSpec.reject(
 							new RateLimitReachedError(
-								`Request dropped because the rate limit for ${
-									partitionKey ? `partition ${partitionKey}` : 'default partition'
-								} was reached`
+								`Request dropped because ${
+									this._paused
+										? 'the rate limiter is paused'
+										: `the rate limit for ${
+												partitionKey ? `partition ${partitionKey}` : 'default partition'
+										  } was reached`
+								}`
 							)
 						);
 						break;

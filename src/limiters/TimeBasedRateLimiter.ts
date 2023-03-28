@@ -43,9 +43,17 @@ export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 				switch (reqSpec.limitReachedBehavior) {
 					case 'enqueue': {
 						this._queue.push(reqSpec);
-						this._logger.warn(
-							`Rate limit of ${this._bucketSize} was reached, waiting for a free bucket entry; queue size is ${this._queue.length}`
-						);
+						if (this._usedFromBucket + this._queue.length >= this._bucketSize) {
+							this._logger.warn(
+								`Rate limit of ${this._bucketSize} was reached, waiting for ${
+									this._paused ? 'the limiter to be unpaused' : 'a free bucket entry'
+								}; queue size is ${this._queue.length}`
+							);
+						} else {
+							this._logger.info(
+								`Enqueueing request because the rate limiter is paused; queue size is ${this._queue.length}`
+							);
+						}
 						break;
 					}
 					case 'null': {
@@ -53,10 +61,23 @@ export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 						this._logger.warn(
 							`Rate limit of ${this._bucketSize} was reached, dropping request and returning null`
 						);
+						if (this._paused) {
+							this._logger.info('Returning null for request because the rate limiter is paused');
+						} else {
+							this._logger.warn(
+								`Rate limit of ${this._bucketSize} was reached, dropping request and returning null`
+							);
+						}
 						break;
 					}
 					case 'throw': {
-						reqSpec.reject(new RateLimitReachedError('Request dropped because the rate limit was reached'));
+						reqSpec.reject(
+							new RateLimitReachedError(
+								`Request dropped because ${
+									this._paused ? 'the rate limiter is paused' : 'the rate limit was reached'
+								}`
+							)
+						);
 						break;
 					}
 					default: {
