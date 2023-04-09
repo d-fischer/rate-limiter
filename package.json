@@ -1,6 +1,6 @@
 {
   "name": "@d-fischer/rate-limiter",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "Rate limit your requests.",
   "keywords": [
     "rate",
