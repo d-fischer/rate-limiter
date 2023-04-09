@@ -5,7 +5,6 @@
 		"module": "commonjs",
 		"target": "es5",
 		"lib": ["es6"],
-		"sourceMap": true,
 		"moduleResolution": "node",
 		"declaration": true,
 		"forceConsistentCasingInFileNames": true,
