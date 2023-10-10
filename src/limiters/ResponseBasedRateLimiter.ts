@@ -1,12 +1,9 @@
-import type { Logger, LoggerOptions } from '@d-fischer/logger';
-import { createLogger } from '@d-fischer/logger';
-import type { PromiseRejection, PromiseResolution } from '@d-fischer/promise.allsettled';
-import allSettled from '@d-fischer/promise.allsettled';
+import { createLogger, type Logger, type LoggerOptions } from '@d-fischer/logger';
 import { mapNullable } from '@d-fischer/shared-utils';
-import type { QueueEntry } from '../QueueEntry';
-import type { RateLimiter, RateLimiterRequestOptions } from '../RateLimiter';
 import { RateLimitReachedError } from '../errors/RateLimitReachedError';
 import { RetryAfterError } from '../errors/RetryAfterError';
+import type { QueueEntry } from '../QueueEntry';
+import type { RateLimiter, RateLimiterRequestOptions } from '../RateLimiter';
 import { type RateLimiterStats } from '../RateLimiterStats';
 
 export interface RateLimiterResponseParameters {
@@ -23,7 +20,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 	private _parameters?: RateLimiterResponseParameters;
 	private _queue: Array<QueueEntry<Req, Res>> = [];
 	private _batchRunning = false;
-	private _nextBatchTimer?: NodeJS.Timer;
+	private _nextBatchTimer?: ReturnType<typeof setTimeout>;
 
 	private _paused = false;
 
@@ -43,7 +40,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 				limitReachedBehavior: options?.limitReachedBehavior ?? 'enqueue'
 			};
 
-			if (this._batchRunning || this._nextBatchTimer || this._paused) {
+			if (this._batchRunning || !!this._nextBatchTimer || this._paused) {
 				this._logger.trace(
 					`request queued batchRunning:${this._batchRunning.toString()} hasNextBatchTimer:${(!!this
 						._nextBatchTimer).toString()} paused:${this._paused.toString()}`
@@ -113,17 +110,15 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 		});
 
 		// downleveling problem hack, see https://github.com/es-shims/Promise.allSettled/issues/5
-		const settledPromises = await allSettled.call(Promise, promises);
-		const rejectedPromises = settledPromises.filter(
-			(p): p is PromiseRejection<RetryAfterError> => p.status === 'rejected'
-		);
+		const settledPromises = await Promise.allSettled(promises);
+		const rejectedPromises = settledPromises.filter((p): p is PromiseRejectedResult => p.status === 'rejected');
 
 		const now = Date.now();
 		if (rejectedPromises.length) {
 			this._logger.trace('runRequestBatch some rejected');
 			const retryAt = Math.max(
 				now,
-				...rejectedPromises.map((p: PromiseRejection<RetryAfterError>) => p.reason.retryAt)
+				...rejectedPromises.map((p: PromiseRejectedResult) => (p.reason as RetryAfterError).retryAt)
 			);
 			const retryAfter = retryAt - now;
 			this._logger.warn(`Waiting for ${retryAfter} ms because the rate limit was exceeded`);
@@ -135,7 +130,7 @@ export abstract class ResponseBasedRateLimiter<Req, Res> implements RateLimiter<
 			this._logger.trace('runRequestBatch none rejected');
 			const params = settledPromises
 				.filter(
-					(p): p is PromiseResolution<RateLimiterResponseParameters> =>
+					(p): p is PromiseFulfilledResult<RateLimiterResponseParameters> =>
 						p.status === 'fulfilled' && p.value !== undefined
 				)
 				.map(p => p.value)
