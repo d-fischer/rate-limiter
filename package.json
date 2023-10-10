@@ -22,6 +22,7 @@
     "url": "https://github.com/d-fischer/rate-limiter.git"
   },
   "author": "Daniel Fischer <daniel@d-fischer.dev>",
+  "funding": "https://github.com/sponsors/d-fischer",
   "license": "MIT",
   "dependencies": {
     "@d-fischer/logger": "^4.2.3",
