@@ -1,5 +1,4 @@
-import type { LoggerOptions, Logger } from '@d-fischer/logger';
-import { createLogger } from '@d-fischer/logger';
+import { createLogger, type LoggerOptions, type Logger } from '@d-fischer/logger';
 import type { QueueEntry } from '../QueueEntry';
 import type { RateLimiter, RateLimiterRequestOptions } from '../RateLimiter';
 import { RateLimitReachedError } from '../errors/RateLimitReachedError';

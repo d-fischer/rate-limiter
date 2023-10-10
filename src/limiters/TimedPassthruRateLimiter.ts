@@ -1,6 +1,5 @@
 import type { RateLimiter, RateLimiterRequestOptions } from '../RateLimiter';
-import type { TimeBasedRateLimiterConfig } from './TimeBasedRateLimiter';
-import { TimeBasedRateLimiter } from './TimeBasedRateLimiter';
+import { TimeBasedRateLimiter, type TimeBasedRateLimiterConfig } from './TimeBasedRateLimiter';
 
 export class TimedPassthruRateLimiter<Req, Res> extends TimeBasedRateLimiter<Req, Res> {
 	constructor(child: RateLimiter<Req, Res>, config: Omit<TimeBasedRateLimiterConfig<Req, Res>, 'doRequest'>) {
