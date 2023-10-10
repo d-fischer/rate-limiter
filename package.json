@@ -24,19 +24,19 @@
   "author": "Daniel Fischer <daniel@d-fischer.dev>",
   "license": "MIT",
   "dependencies": {
-    "@d-fischer/logger": "^4.2.1",
+    "@d-fischer/logger": "^4.2.3",
     "@d-fischer/promise.allsettled": "^2.0.2",
-    "@d-fischer/shared-utils": "^3.2.0",
-    "tslib": "^2.0.3"
+    "@d-fischer/shared-utils": "^3.6.3",
+    "tslib": "^2.6.2"
   },
   "devDependencies": {
-    "@d-fischer/eslint-config": "^6.1.8",
-    "eslint": "^8.30.0",
+    "@d-fischer/eslint-config": "^6.2.2",
+    "eslint": "^8.51.0",
     "husky": "^4.3.6",
-    "lint-staged": "^13.1.0",
-    "prettier": "^2.2.1",
-    "tsukuru": "^0.8.0-pre.11",
-    "typescript": "~4.9.4"
+    "lint-staged": "^14.0.1",
+    "prettier": "^3.0.3",
+    "tsukuru": "^0.8.0",
+    "typescript": "~5.2.2"
   },
   "files": [
     "LICENSE",
