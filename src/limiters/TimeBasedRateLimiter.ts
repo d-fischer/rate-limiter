@@ -2,6 +2,7 @@ import { createLogger, type LoggerOptions, type Logger } from '@d-fischer/logger
 import type { QueueEntry } from '../QueueEntry';
 import type { RateLimiter, RateLimiterRequestOptions } from '../RateLimiter';
 import { RateLimitReachedError } from '../errors/RateLimitReachedError';
+import { RateLimiterDestroyedError } from '../errors/RateLimiterDestroyedError';
 
 export interface TimeBasedRateLimiterConfig<Req, Res> {
 	bucketSize: number;
@@ -16,8 +17,10 @@ export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 	private readonly _bucketSize: number;
 	private readonly _timeFrame: number;
 	private readonly _callback: (req: Req) => Promise<Res>;
+	private readonly _counterTimers = new Set<ReturnType<typeof setTimeout>>();
 
 	private _paused = false;
+	private _destroyed = false;
 
 	private readonly _logger: Logger;
 
@@ -31,6 +34,11 @@ export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 
 	async request(req: Req, options?: RateLimiterRequestOptions): Promise<Res> {
 		return await new Promise((resolve, reject) => {
+			if (this._destroyed) {
+				reject(new RateLimiterDestroyedError('Rate limiter was destroyed'));
+				return;
+			}
+
 			const reqSpec: QueueEntry<Req, Res> = {
 				req,
 				resolve,
@@ -102,6 +110,18 @@ export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 		this._runNextRequest();
 	}
 
+	destroy(): void {
+		this._paused = false;
+		this._destroyed = true;
+		this._counterTimers.forEach(timer => {
+			clearTimeout(timer);
+		});
+		for (const req of this._queue) {
+			req.reject(new RateLimiterDestroyedError('Rate limiter was destroyed'));
+		}
+		this._queue = [];
+	}
+
 	private async _runRequest(reqSpec: QueueEntry<Req, Res>) {
 		this._logger.debug(`doing a request, new queue length is ${this._queue.length}`);
 		this._usedFromBucket += 1;
@@ -111,12 +131,14 @@ export class TimeBasedRateLimiter<Req, Res> implements RateLimiter<Req, Res> {
 		} catch (e) {
 			reject(e as Error);
 		} finally {
-			setTimeout(() => {
+			const counterTimer = setTimeout(() => {
+				this._counterTimers.delete(counterTimer);
 				this._usedFromBucket -= 1;
 				if (this._queue.length && this._usedFromBucket < this._bucketSize) {
 					this._runNextRequest();
 				}
 			}, this._timeFrame);
+			this._counterTimers.add(counterTimer);
 		}
 	}
 

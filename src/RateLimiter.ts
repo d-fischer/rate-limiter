@@ -9,4 +9,5 @@ export interface RateLimiter<Req, Res> {
 	clear: () => void;
 	pause: () => void;
 	resume: () => void;
+	destroy?: () => void;
 }

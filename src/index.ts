@@ -2,8 +2,9 @@ export type { QueueEntryLimitReachedBehavior } from './QueueEntry';
 export type { RateLimiter, RateLimiterRequestOptions } from './RateLimiter';
 export { type RateLimiterStats } from './RateLimiterStats';
 
-export { RetryAfterError } from './errors/RetryAfterError';
+export { RateLimiterDestroyedError } from './errors/RateLimiterDestroyedError';
 export { RateLimitReachedError } from './errors/RateLimitReachedError';
+export { RetryAfterError } from './errors/RetryAfterError';
 
 export { NullRateLimiter } from './limiters/NullRateLimiter';
 export { PartitionedRateLimiter, type PartitionedRateLimiterOptions } from './limiters/PartitionedRateLimiter';

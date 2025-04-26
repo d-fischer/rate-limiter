@@ -3,6 +3,7 @@ import type { QueueEntry } from '../QueueEntry';
 import type { RateLimiter, RateLimiterRequestOptions } from '../RateLimiter';
 import { RateLimitReachedError } from '../errors/RateLimitReachedError';
 import type { TimeBasedRateLimiterConfig } from './TimeBasedRateLimiter';
+import { RateLimiterDestroyedError } from '../errors/RateLimiterDestroyedError';
 
 export interface PartitionedTimeBasedRateLimiterConfig<Req, Res> extends TimeBasedRateLimiterConfig<Req, Res> {
 	getPartitionKey: (req: Req) => string | null;
@@ -15,8 +16,10 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 	private readonly _timeFrame: number;
 	private readonly _callback: (req: Req) => Promise<Res>;
 	private readonly _partitionKeyCallback: (req: Req) => string | null;
+	private readonly _counterTimers = new Set<ReturnType<typeof setTimeout>>();
 
 	private _paused = false;
+	private _destroyed = false;
 
 	private readonly _logger: Logger;
 
@@ -37,6 +40,11 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 
 	async request(req: Req, options?: RateLimiterRequestOptions): Promise<Res> {
 		return await new Promise((resolve, reject) => {
+			if (this._destroyed) {
+				reject(new RateLimiterDestroyedError('Rate limiter was destroyed'));
+				return;
+			}
+
 			const reqSpec: QueueEntry<Req, Res> = {
 				req,
 				resolve,
@@ -93,7 +101,7 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 										? 'the rate limiter is paused'
 										: `the rate limit for ${
 												partitionKey ? `partition ${partitionKey}` : 'default partition'
-										  } was reached`
+											} was reached`
 								}`
 							)
 						);
@@ -124,6 +132,20 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 		}
 	}
 
+	destroy(): void {
+		this._paused = false;
+		this._destroyed = true;
+		this._counterTimers.forEach(timer => {
+			clearTimeout(timer);
+		});
+		for (const queue of this._partitionedQueue.values()) {
+			for (const req of queue) {
+				req.reject(new RateLimiterDestroyedError('Rate limiter was destroyed'));
+			}
+		}
+		this._partitionedQueue.clear();
+	}
+
 	private _getPartitionedQueue(partitionKey: string | null): Array<QueueEntry<Req, Res>> {
 		if (this._partitionedQueue.has(partitionKey)) {
 			return this._partitionedQueue.get(partitionKey)!;
@@ -148,13 +170,15 @@ export class PartitionedTimeBasedRateLimiter<Req, Res> implements RateLimiter<Re
 		} catch (e) {
 			reject(e as Error);
 		} finally {
-			setTimeout(() => {
+			const counterTimer = setTimeout(() => {
+				this._counterTimers.delete(counterTimer);
 				const newUsed = this._usedFromBucket.get(partitionKey)! - 1;
 				this._usedFromBucket.set(partitionKey, newUsed);
 				if (queue.length && newUsed < this._bucketSize) {
 					this._runNextRequest(partitionKey);
 				}
 			}, this._timeFrame);
+			this._counterTimers.add(counterTimer);
 		}
 	}
 
